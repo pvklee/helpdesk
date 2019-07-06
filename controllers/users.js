@@ -1,9 +1,10 @@
-const {validateSignup, validateLogin, validateAddRemoveSubject, validateUserId} = require('../validation/users')
+const {validateSignup, validateLogin} = require('../validation/users')
 const bcrypt = require('bcryptjs');
 const saltRounds = 10;
 const jwt = require('jsonwebtoken');
-const keys = require('../config/keys');
+const secretOrKey = require('../config/config').secret;
 const conn = require('../config/db');
+
 
 exports.signup = async (req, res) => {
   const {errors, isValid} = validateSignup(req.body);
@@ -28,7 +29,7 @@ exports.signup = async (req, res) => {
   const payload = {id: result.insertId, email};
   jwt.sign(
     payload,
-    keys.secretOrKey,
+    secretOrKey,
     {expiresIn: 3600},
     (err, token) => {
       return res.json({
@@ -52,7 +53,7 @@ exports.login = async (req, res) => {
     const payload = {id: users[0].id, username: users[0].email};
     jwt.sign(
       payload,
-      keys.secretOrKey,
+      secretOrKey,
       {expiresIn: 3600},
       (err, token) => {
         return res.json({
@@ -67,54 +68,4 @@ exports.login = async (req, res) => {
 
 exports.current = (req, res) => {
   return res.json({id: req.currentUser.id});
-}
-
-exports.create_ticket = async (req, res) => {
-  const submitter_id = req.currentUser.id;
-  const {supporter_id, description} = req.body;
-  const ticket = {
-    description,
-    status: 'new',
-    submitter_id,
-    supporter_id
-  };
-  const query = [`
-    INSERT INTO tickets
-    SET ?
-  `, ticket];
-  let result;
-  try{
-    [result] = await conn.query(...query);
-  } catch (errs) {
-    return res.status(400).json(errs);
-  }
-  return res.json({id: result.insertId});
-}
-
-exports.get_all_tickets = async (req, res) => {
-  const id = req.currentUser.id;
-  const query = [`
-    SELECT *
-    FROM tickets
-    WHERE submitter_id = ?
-    OR supporter_id = ?
-  `, [id, id]];
-  const [tickets] = await conn.query(...query)
-  return res.json({tickets});
-}
-
-exports.update_ticket = async (req, res) => {
-  const {status, ticket_id} = req.body;
-  const query = [`
-    UPDATE tickets
-    SET status = ?
-    WHERE id = ?
-  `, [status, ticket_id]]
-  let result;
-  try{
-    [result] = await conn.query(...query);
-  } catch (errs) {
-    return res.status(400).json(errs);
-  }
-  return res.json({id: result.info});
 }

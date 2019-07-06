@@ -12,7 +12,13 @@ const dev = {
     password: process.env.DEV_DB_PASSWORD || '<your password>',
     database: process.env.DEV_DB_NAME || 'helpdesk',
     port: parseInt(process.env.DEV_DB_PORT) || 3306
-  }
+  },
+  redis: {
+    port: process.env.DEV_REDIS_PORT || 6379,
+    host: process.env.DEV_REDIS_HOST || "127.0.0.1",
+    password: process.env.DEV_REDIS_PASSWORD
+  },
+  secret: process.env.DEV_SECRET_KEY
 };
 
 const test = {
